@@ -1,0 +1,10 @@
+bindAddress: ":8080"
+logSetting:
+  logLevel: DEBUG
+  logPath: /var/log/myspider # 日志存放路径：${logPath}/${fileName}
+  outputToConsole: true  # 是否同时将日志打印到控制台
+  fileName: myspider.log
+  maxSizeInMB: 100   # 日志文件的体积
+  maxAgeInDay: 30   # 最多保留天数
+  maxBackups: 10    # 允许存在几个日志备份文件
+  compress: true    # 是否压缩保存历史文件
