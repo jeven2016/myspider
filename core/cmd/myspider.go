@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"core/pkg/config"
@@ -11,6 +11,10 @@ import (
 	"go.uber.org/zap"
 	"os"
 )
+
+func main() {
+	NewService()
+}
 
 func NewService() {
 	var rootCmd = &cobra.Command{

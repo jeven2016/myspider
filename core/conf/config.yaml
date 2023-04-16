@@ -1,4 +1,28 @@
 bindAddress: ":8080"
+execution:
+  web1:
+    enabled: true
+    parallel: true
+    jobs:
+      - name: homeJob
+        url: http://home.com
+        destination: catalogTopic
+
+      - name: catalogJob
+        source: catalogTopic
+        destination: articlePage
+
+      - name: articlePageJob
+        source: articlePage
+        destination: articleTopic
+
+      - name: articleJob
+        source: articleTopic
+        destination: chapterTopic
+
+      - name: chapter
+        source: chapterTopic
+        
 logSetting:
   logLevel: DEBUG
   logPath: /var/log/myspider # 日志存放路径：${logPath}/${fileName}
