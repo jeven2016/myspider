@@ -1,7 +1,10 @@
 package main
 
 import (
+	"core/pkg/client"
+	"core/pkg/common"
 	"core/pkg/config"
+	"core/pkg/job"
 	"core/pkg/log"
 	"core/pkg/server"
 	"errors"
@@ -61,22 +64,27 @@ func run(cmd *cobra.Command) {
 	PrintBanner()
 
 	// 加载配置文件
-	err = config.LoadConfig(cfgPath)
+	err = config.LoadAllConfigFiles(cfgPath)
 	if err == nil {
-		cfg := config.GetConfig()
-
-		if err = cfg.Validate(); err != nil {
-			printCmdErr(err)
-			return
-		}
-
-		if err = cfg.Complete(); err != nil {
-			printCmdErr(err)
-			return
-		}
+		cfgHandler := config.GetConfig(common.SysCfg)
+		cfg := cfgHandler.(*config.SysConfig)
 
 		// 初始化Log
 		log.SetupLog(cfg)
+
+		// 初始化mongodb
+		//if err = client.InitMongodbClient(cfg.MongoDb); err != nil {
+		//	log.Error("Cannot connect to mongodb", zap.Error(err))
+		//	return
+		//}
+
+		// 初始化redis
+		if err = client.InitRedisClient(cfg.Redis); err != nil {
+			log.Error("Cannot connect to redis", zap.Error(err))
+			return
+		}
+
+		go job.PrepareJobs(cfg)
 
 		// 初始化web服务
 		engine := server.Start()
@@ -84,7 +92,7 @@ func run(cmd *cobra.Command) {
 		// 绑定地址，启动
 		bindAddr := fmt.Sprintf("%v", cfg.BindAddress)
 		if err := engine.Run(bindAddr); err != nil {
-			log.Log().Error("Server fails to start", zap.Error(err))
+			log.Error("Server fails to start", zap.Error(err))
 		}
 	}
 }

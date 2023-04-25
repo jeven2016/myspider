@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// InitWebEndpoints Start a web server
+// Start corresponding services
 func Start() *gin.Engine {
 	registerGobType()
 

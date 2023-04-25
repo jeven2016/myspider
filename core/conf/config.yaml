@@ -1,12 +1,42 @@
 bindAddress: ":8080"
+
+mongodb:
+  uri: "mongodb://db_user:db_pwd@127.0.0.1:27017/books?retryWrites=true&w=majority&authSource=admin&maxPoolSize=20"
+  database: books
+
+redis:
+  address: "localhost:6379"
+  password: pwd
+  db: 1
+  poolSize: 10
+  poolTimeoutSeconds: 30
+  readTimeoutSeconds: 30
+  writeTimeoutSeconds: 30
+
 execution:
+  web2:
+    enabled: true
+    parallel: true
+    jobs:
+      #下载单篇书籍
+      - name: articleJob
+        source: articleTopic
+        destination: chapterTopic
+
+      - name: chapter
+        source: chapterTopic
   web1:
     enabled: true
     parallel: true
     jobs:
       - name: homeJob
+        parser: HomeParser #HomeParser, CatalogParser, CatalogPageParser, BookParser, ChapterParser
         url: http://home.com
         destination: catalogTopic
+        action:
+          load: true
+          save: true
+          analyse: true
 
       - name: catalogJob
         source: catalogTopic
@@ -22,7 +52,7 @@ execution:
 
       - name: chapter
         source: chapterTopic
-        
+
 logSetting:
   logLevel: DEBUG
   logPath: /var/log/myspider # 日志存放路径：${logPath}/${fileName}

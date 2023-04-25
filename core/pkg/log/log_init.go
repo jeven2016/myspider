@@ -18,7 +18,7 @@ var logLevelMap = map[string]zapcore.Level{
 
 var logger *zap.Logger
 
-func SetupLog(cfg *config.Config) {
+func SetupLog(cfg *config.SysConfig) {
 	var logSetting = cfg.LogSetting
 	level, ok := logLevelMap[logSetting.LogLevel]
 	if !ok {
@@ -77,6 +77,36 @@ func SetupLog(cfg *config.Config) {
 	logger = zap.New(zapCore, options...)
 }
 
-func Log() *zap.Logger {
+func Log(lvl zapcore.Level, msg string, fields ...zap.Field) {
+	if ce := logger.Check(lvl, msg); ce != nil {
+		ce.Write(fields...)
+	}
+}
+
+func Debug(msg string, fields ...zap.Field) {
+	if ce := logger.Check(zap.DebugLevel, msg); ce != nil {
+		ce.Write(fields...)
+	}
+}
+
+func Info(msg string, fields ...zap.Field) {
+	if ce := logger.Check(zap.InfoLevel, msg); ce != nil {
+		ce.Write(fields...)
+	}
+}
+
+func Warn(msg string, fields ...zap.Field) {
+	if ce := logger.Check(zap.WarnLevel, msg); ce != nil {
+		ce.Write(fields...)
+	}
+}
+
+func Error(msg string, fields ...zap.Field) {
+	if ce := logger.Check(zap.ErrorLevel, msg); ce != nil {
+		ce.Write(fields...)
+	}
+}
+
+func Logger() *zap.Logger {
 	return logger
 }
