@@ -1,5 +1,8 @@
 bindAddress: ":8080"
 
+spider:
+  httpProxy: http://localhost:10809
+
 mongodb:
   uri: "mongodb://db_user:db_pwd@127.0.0.1:27017/books?retryWrites=true&w=majority&authSource=admin&maxPoolSize=20"
   database: books
@@ -7,51 +10,44 @@ mongodb:
 redis:
   address: "localhost:6379"
   password: pwd
-  db: 1
+  db: 0
   poolSize: 10
   poolTimeoutSeconds: 30
   readTimeoutSeconds: 30
   writeTimeoutSeconds: 30
 
 execution:
-  web2:
-    enabled: true
-    parallel: true
-    jobs:
-      #下载单篇书籍
-      - name: articleJob
-        source: articleTopic
-        destination: chapterTopic
-
-      - name: chapter
-        source: chapterTopic
   web1:
     enabled: true
     parallel: true
+    name: 第一版主小说网
+    homeUrl: https://m.xinbanzhu.net/sort/
     jobs:
+      #首页，确定有多少栏目
       - name: homeJob
-        parser: HomeParser #HomeParser, CatalogParser, CatalogPageParser, BookParser, ChapterParser
-        url: http://home.com
-        destination: catalogTopic
-        action:
-          load: true
-          save: true
-          analyse: true
+        type: HomeJob
+        parser: HomeParser #HomeParser, CatalogHomeParser,CatalogParser, CatalogPageParser, BookParser, ChapterParser
 
-      - name: catalogJob
-        source: catalogTopic
-        destination: articlePage
+      # 每个栏目确定有多少页，每一页发送一条消息
+      - name: catalogHomeJob
+        type: CatalogHomeJob
+        parser: CatalogHomeParser
 
-      - name: articlePageJob
-        source: articlePage
-        destination: articleTopic
+      # 当前页下有多少书籍
+      - name: catalogPageJob
+        type: CatalogPageJob
+        parser: CatalogPageParser
 
-      - name: articleJob
-        source: articleTopic
-        destination: chapterTopic
+#      - name: articlePageJob
+      #        source: articlePage
+      #        destination: articleTopic
 
-      - name: chapter
-        source: chapterTopic
+#      - name: articleJob
+      #        source: articleTopic
+      #        destination: chapterTopic
+
+#      - name: chapter
+#        source: chapterTopic
 
 logSetting:
   logLevel: DEBUG

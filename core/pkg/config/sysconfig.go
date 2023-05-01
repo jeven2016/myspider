@@ -1,30 +1,17 @@
 package config
 
+import "core/pkg/model"
+
 type SysConfig struct {
 	BindAddress string      `mapstructure:"bindAddress"`
 	Execution   Execution   `mapstructure:"execution"`
 	LogSetting  *LogSetting `mapstructure:"logSetting"`
 	Redis       *Redis      `mapstructure:"redis"`
 	MongoDb     *MongoDb    `mapstructure:"mongodb"`
+	Spider      *Spider     `mapstructure:"spider"`
 }
 
-type Execution map[string]WebSite
-
-type WebSite struct {
-	Enabled  bool        `mapstructure:"enabled"`
-	Parallel bool        `mapstructure:"parallel"`
-	Jobs     []JobParams `mapstructure:"jobs"`
-}
-
-type JobParams struct {
-	Enabled     bool    `mapstructure:"enabled"`
-	Name        string  `mapstructure:"name"`
-	Parser      string  `mapstructure:"parser"`
-	Url         string  `mapstructure:"url"`
-	Source      string  `mapstructure:"source"`
-	Destination string  `mapstructure:"destination"`
-	Action      *Action `mapstructure:"action"`
-}
+type Execution map[string]*model.Site
 
 type Action struct {
 	Load    bool `mapstructure:"load"`
@@ -54,8 +41,12 @@ type Redis struct {
 }
 
 type MongoDb struct {
-	Uri      string `bson:"uri"`
-	Database string `bson:"database"`
+	Uri      string `mapstructure:"uri"`
+	Database string `mapstructure:"database"`
+}
+
+type Spider struct {
+	HttpProxy string `mapstructure:"httpProxy"`
 }
 
 func (c *SysConfig) Validate() error {
@@ -63,5 +54,15 @@ func (c *SysConfig) Validate() error {
 }
 
 func (c *SysConfig) Complete() error {
+	executionMap := c.Execution
+	if executionMap != nil {
+		for k, v := range executionMap {
+			//set the name with the key if name isn't present
+			if len(v.Name) == 0 {
+				v.Name = k
+				executionMap[k] = v
+			}
+		}
+	}
 	return nil
 }

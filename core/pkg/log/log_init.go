@@ -16,6 +16,9 @@ var logLevelMap = map[string]zapcore.Level{
 	"ERROR": zapcore.ErrorLevel,
 }
 
+// zap.SugaredLogger 就是对 zap.Logger 进行了封装，提供了一些高级的语法糖特性，
+// 如支持使用类似 fmt.Printf 的形式进行格式化输出
+var sugLogger *zap.SugaredLogger
 var logger *zap.Logger
 
 func SetupLog(cfg *config.SysConfig) {
@@ -75,38 +78,16 @@ func SetupLog(cfg *config.SysConfig) {
 	options = append(options, zap.Development())
 
 	logger = zap.New(zapCore, options...)
-}
+	sugLogger = logger.Sugar()
 
-func Log(lvl zapcore.Level, msg string, fields ...zap.Field) {
-	if ce := logger.Check(lvl, msg); ce != nil {
-		ce.Write(fields...)
-	}
-}
-
-func Debug(msg string, fields ...zap.Field) {
-	if ce := logger.Check(zap.DebugLevel, msg); ce != nil {
-		ce.Write(fields...)
-	}
-}
-
-func Info(msg string, fields ...zap.Field) {
-	if ce := logger.Check(zap.InfoLevel, msg); ce != nil {
-		ce.Write(fields...)
-	}
-}
-
-func Warn(msg string, fields ...zap.Field) {
-	if ce := logger.Check(zap.WarnLevel, msg); ce != nil {
-		ce.Write(fields...)
-	}
-}
-
-func Error(msg string, fields ...zap.Field) {
-	if ce := logger.Check(zap.ErrorLevel, msg); ce != nil {
-		ce.Write(fields...)
-	}
+	// 替换全局logger
+	zap.ReplaceGlobals(logger)
 }
 
 func Logger() *zap.Logger {
 	return logger
+}
+
+func SugaredLogger() *zap.SugaredLogger {
+	return sugLogger
 }

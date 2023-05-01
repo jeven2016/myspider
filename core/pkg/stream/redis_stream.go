@@ -2,30 +2,38 @@ package stream
 
 import (
 	"context"
+	"core/pkg/client"
+	"core/pkg/common"
+	"core/pkg/log"
 	"github.com/redis/go-redis/v9"
 	"github.com/reugn/go-streams"
 	"github.com/reugn/go-streams/flow"
-	"log"
 	"math/rand"
 	"strconv"
 )
 
 // this file forked and enhanced based on https://github.com/reugn/go-streams since I want to use go-redis/v9 and redis stream feature
 
+//redis stream XADDArg 的values只能是如下格式
+// XAddArgs accepts values in the following formats:
+//   - XAddArgs.Values = []interface{}{"key1", "value1", "key2", "value2"}
+//   - XAddArgs.Values = []string("key1", "value1", "key2", "value2")
+//   - XAddArgs.Values = map[string]interface{}{"key1": "value1", "key2": "value2"}
+
 // RedisStreamSource is a Redis Pub/Sub Source
 type RedisStreamSource struct {
 	ctx           context.Context
-	redisClient   *redis.Client
+	redisClient   *client.RedisClient
 	out           chan interface{}
 	streamName    string
 	consumerGroup string
 }
 
 // NewRedisStreamSource returns a new RedisStreamSource instance
-func NewRedisStreamSource(ctx context.Context, client *redis.Client, streamName string,
+func NewRedisStreamSource(ctx context.Context, client *client.RedisClient, streamName string,
 	consumerGroup string) (*RedisStreamSource, error) {
 	var err error
-	if err = ensureConsumeGroup(client, consumerGroup, streamName); err != nil {
+	if err = ensureConsumeGroup(client.Client, consumerGroup, streamName); err != nil {
 		return nil, err
 	}
 
@@ -68,7 +76,10 @@ func ensureConsumeGroup(client *redis.Client, consumerGroup, stream string) erro
 func (rs *RedisStreamSource) init(ctx context.Context) {
 	defer func() {
 		close(rs.out)
-		rs.redisClient.Close()
+		rs.redisClient.Client.Close()
+		if err := recover(); err != nil {
+			log.SugaredLogger().Errorf("an unexpected error occurs during fetching data form stream, %v", err)
+		}
 	}()
 
 loop:
@@ -78,29 +89,40 @@ loop:
 		case <-ctx.Done():
 			break loop
 		default:
-			consumer := rs.streamName + ":consumer:" + strconv.Itoa(rand.Int())
-			entries, err := rs.redisClient.XReadGroup(context.Background(), &redis.XReadGroupArgs{
-				Group:    rs.consumerGroup,
-				Consumer: consumer,
-
-				Streams: []string{rs.streamName, ">"},
-				Count:   2,
-				Block:   0,
-			}).Result()
-			if err != nil {
-				panic(err)
-			}
-			for i := 0; i < len(entries[0].Messages); i++ {
-				messageID := entries[0].Messages[i].ID
-				values := entries[0].Messages[i].Values
-				rs.out <- values
-				rs.redisClient.XAck(context.Background(), rs.streamName, rs.consumerGroup, messageID)
-
-			}
+			rs.fetchFromStream()
 		}
 
 	}
 
+}
+
+func (rs *RedisStreamSource) fetchFromStream() {
+	defer func() {
+		if err := recover(); err != nil {
+			log.SugaredLogger().Errorf("an unexpected error occurs, %v", err)
+		}
+	}()
+
+	consumer := rs.streamName + ":consumer:" + strconv.Itoa(rand.Int())
+	entries, err := rs.redisClient.Client.XReadGroup(context.Background(), &redis.XReadGroupArgs{
+		Group:    rs.consumerGroup,
+		Consumer: consumer,
+
+		Streams: []string{rs.streamName, ">"},
+		Count:   2,
+		Block:   0,
+	}).Result()
+	if err != nil {
+		log.SugaredLogger().Errorf("failed to handle XReadGroup, %v", err)
+		return
+	}
+	for i := 0; i < len(entries[0].Messages); i++ {
+		messageID := entries[0].Messages[i].ID
+		jsonData := entries[0].Messages[i].Values[common.StreamValuesKey]
+		rs.out <- jsonData
+		rs.redisClient.Client.XAck(context.Background(), rs.streamName, rs.consumerGroup, messageID)
+		log.SugaredLogger().Info("fetch a message from stream")
+	}
 }
 
 // Via streams data through the given flow
@@ -116,13 +138,13 @@ func (rs *RedisStreamSource) Out() <-chan interface{} {
 
 // RedisStreamSink is a Redis Pub/Sub Sink
 type RedisStreamSink struct {
-	redisClient *redis.Client
+	redisClient *client.RedisClient
 	in          chan interface{}
 	streamName  string
 }
 
 // NewRedisStreamSink returns a new RedisStreamSink instance
-func NewRedisStreamSink(ctx context.Context, client *redis.Client, streamName string) *RedisStreamSink {
+func NewRedisStreamSink(ctx context.Context, client *client.RedisClient, streamName string) *RedisStreamSink {
 	sink := &RedisStreamSink{
 		client,
 		make(chan interface{}),
@@ -135,20 +157,21 @@ func NewRedisStreamSink(ctx context.Context, client *redis.Client, streamName st
 
 // init starts the main loop
 func (rs *RedisStreamSink) init(ctx context.Context) {
-	defer rs.redisClient.Close()
-	for msg := range rs.in {
-		err := rs.redisClient.XAdd(ctx, &redis.XAddArgs{Stream: rs.streamName,
-			NoMkStream: false,  // * 默认false,当为false时,key不存在，会新建
-			MaxLen:     100000, // * 指定stream的最大长度,当队列长度超过上限后，旧消息会被删除，只保留固定长度的新消息
-			Approx:     false,  // * 默认false,当为true时,模糊指定stream的长度
-			ID:         "*",    // 消息 id，我们使用 * 表示由 redis 生成
-			// MinID: "id",            // * 超过阈值，丢弃设置的小于MinID消息id【基本不用】
-			// Limit: 1000,            // * 限制长度【基本不用】
-			Values: msg}).Err()
-
-		if err != nil {
-			log.Printf("NewRedisStreamSink.init():Send message failed with: %s", err)
+	defer func() {
+		//rs.redisClient.Close()
+		if err := recover(); err != nil {
+			log.SugaredLogger().Errorf("an unexpected error occurs, %v", err)
 		}
+	}()
+
+	for msg := range rs.in {
+		if msg == nil {
+			continue
+		}
+		if err := rs.redisClient.PublishMessage(ctx, msg, rs.streamName); err != nil {
+			log.SugaredLogger().Errorf("failed to send a message into stream %v: %v", rs.streamName, err)
+		}
+
 	}
 
 }

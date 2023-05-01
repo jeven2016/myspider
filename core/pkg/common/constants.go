@@ -1,7 +1,11 @@
 package common
 
+const StreamValuesKey = "data"
+
 // ConfigFileType 配置文件类型
 type ConfigFileType int
+
+var JobParallelism uint = 1
 
 const (
 	SysCfg ConfigFileType = iota
@@ -18,16 +22,19 @@ var CfgSearchPaths = []string{"/etc/myspider", "./conf", "./"}
 
 const (
 	HomeParser        = "HomeParser"
-	CatalogParser     = "CatalogParser"
+	CatalogHomeParser = "CatalogHomeParser"
 	CatalogPageParser = "CatalogPageParser"
 	BookParser        = "BookParser"
 	ChapterParser     = "ChapterParser"
+
+	HomeJob        = "HomeJob"
+	CatalogHomeJob = "CatalogHomeJob"
+	CatalogPageJob = "CatalogPageJob"
 )
 
 const (
-	HomeUrlStream         = "homeUrlStream"
-	HomeUrlStreamConsumer = "HomeUrlStreamConsumer"
-
-	SiteCatalogUrlStream         = "SiteCatalogUrlStream"
-	SiteCatalogUrlStreamConsumer = "SiteCatalogUrlStreamConsumer"
+	SiteCtx   = "site"
+	ParserCtx = "parser"
 )
+
+const ErrChan = "errChan"

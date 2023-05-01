@@ -2,7 +2,6 @@ package main
 
 import (
 	"core/pkg/client"
-	"core/pkg/common"
 	"core/pkg/config"
 	"core/pkg/job"
 	"core/pkg/log"
@@ -66,8 +65,7 @@ func run(cmd *cobra.Command) {
 	// 加载配置文件
 	err = config.LoadAllConfigFiles(cfgPath)
 	if err == nil {
-		cfgHandler := config.GetConfig(common.SysCfg)
-		cfg := cfgHandler.(*config.SysConfig)
+		cfg := config.GetSysConfig()
 
 		// 初始化Log
 		log.SetupLog(cfg)
@@ -80,7 +78,7 @@ func run(cmd *cobra.Command) {
 
 		// 初始化redis
 		if err = client.InitRedisClient(cfg.Redis); err != nil {
-			log.Error("Cannot connect to redis", zap.Error(err))
+			log.SugaredLogger().Error("cannot connect to redis", zap.Error(err))
 			return
 		}
 
@@ -92,7 +90,7 @@ func run(cmd *cobra.Command) {
 		// 绑定地址，启动
 		bindAddr := fmt.Sprintf("%v", cfg.BindAddress)
 		if err := engine.Run(bindAddr); err != nil {
-			log.Error("Server fails to start", zap.Error(err))
+			log.SugaredLogger().Error("server fails to start", zap.Error(err))
 		}
 	}
 }

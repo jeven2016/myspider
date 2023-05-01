@@ -2,6 +2,7 @@ package config
 
 import (
 	"core/pkg/common"
+	"core/pkg/model"
 	"github.com/duke-git/lancet/v2/slice"
 	"log"
 
@@ -46,6 +47,22 @@ func GetConfig(cfgFiletype common.ConfigFileType) CfgHandler {
 	return configMap[cfgFiletype]
 }
 
+func GetSysConfig() *SysConfig {
+	cfgHandler := GetConfig(common.SysCfg)
+	if cfgHandler == nil {
+		return nil
+	}
+	return cfgHandler.(*SysConfig)
+}
+
+func GetSiteRuleConfig() *model.SiteRule {
+	cfgHandler := GetConfig(common.SiteRuleCfg)
+	if cfgHandler == nil {
+		return nil
+	}
+	return cfgHandler.(*model.SiteRule)
+}
+
 func LoadAllConfigFiles(cfgPath string) error {
 	configObj := new(SysConfig)
 	configFileSetting := &GenericConfigSetting{
@@ -57,7 +74,7 @@ func LoadAllConfigFiles(cfgPath string) error {
 		Target:      configObj,
 	}
 
-	siteRule := new(SiteRule)
+	siteRule := new(model.SiteRule)
 	siteConfigFileSetting := &GenericConfigSetting{
 		Type:        common.SiteRuleCfg,
 		Path:        cfgPath,

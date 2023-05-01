@@ -1,27 +1,23 @@
 key: web1
-name: AAA_site
-description: some texts to describe
-homeUrl: www.a.com
-catalog:
-  enabled: true
-  autoCreated: true
-  rule:
-book:
-  enabled: true
-  rule:
-    home:
-      catalog_title_selector: ""
-      catalog_url: ""
-    book:
-      "book_title_selector": "#info h1"
-      "book_author_selector": "#info p:nth-of-type(1)"
-      "book_cate_selector": ".box_con .con_top a:nth-of-type(2)"
-      "book_desc_selector": "#intro"
-      "book_cover_selector": "#fmimg img"
-      "book_no_cover": "nocover.jpg"
-      "book_chapter_url_selector": ""
-      "book_last_chapter_title_selector": "#info p:nth-of-type(4) a"
-    chapter:
+rule:
+  home:
+    catalog_title_selector: "div[class=content] a[id]"
+    catalog_url_attr: "href"
+    catalog_page_selector: "div[class=page] a:last-child"
+    catalog_title_name: ""
+  book:
+    "book_url_selector": "p[class=line] a:nth-child(2)"
+    "book_url_attr": "href"
+
+    "book_title_selector": "#info h1"
+    "book_author_selector": "#info p:nth-of-type(1)"
+    "book_cate_selector": ".box_con .con_top a:nth-of-type(2)"
+    "book_desc_selector": "#intro"
+    "book_cover_selector": "#fmimg img"
+    "book_no_cover": "nocover.jpg"
+    "book_chapter_url_selector": ""
+    "book_last_chapter_title_selector": "#info p:nth-of-type(4) a"
+  chapter:
     "chapter_catalog_selector": "#list dl dd a"
     "chapter_abandon_num": 0
     "info_title_selector": ".bookname h1"

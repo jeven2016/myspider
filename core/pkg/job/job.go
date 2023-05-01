@@ -2,89 +2,54 @@ package job
 
 import (
 	"context"
-	"core/pkg/client"
 	"core/pkg/common"
-	"core/pkg/config"
-	"core/pkg/stream"
+	"core/pkg/job/parser"
+	"core/pkg/model"
 	"errors"
-	"github.com/reugn/go-streams/flow"
 )
 
+type ExecutionResult struct {
+	JobName string
+	Err     error
+}
+
 type Job interface {
-	preExecute()
-	Run()
+	Validate(ctx context.Context) error
+	ConvertParams(jsonData string) *parser.ParseParams
+	Run(ctx context.Context)
 }
 
-type GenericJob struct {
-	JobParams     *config.JobParams
-	enabled       bool
-	enableLoad    bool
-	enableSave    bool
-	enableAnalyse bool
+type WrapperJob struct {
+	JobParams  *model.SiteJob
+	JobHandler Job
+	Parser     parser.Parser
 }
 
-func NewGenericJob(jobParams *config.JobParams) *GenericJob {
-	var load bool
-	var save bool
-	var analyse bool
-
-	if jobParams.Action == nil {
-		load = true
-		save = true
-		analyse = true
-	} else {
-		action := jobParams.Action
-		load = action.Load
-		save = action.Save
-		analyse = action.Analyse
+func NewWrapperJob(jobParams *model.SiteJob) (*WrapperJob, error) {
+	realJob := GetJob(jobParams.Type)
+	if realJob == nil {
+		return nil, errors.New("no job registered for type " + jobParams.Type)
 	}
 
-	return &GenericJob{
-		JobParams:     jobParams,
-		enabled:       true,
-		enableLoad:    load,
-		enableSave:    save,
-		enableAnalyse: analyse,
+	pageParser := GetParser(jobParams.Parser)
+	if pageParser == nil {
+		return nil, errors.New("no parser registered for " + jobParams.Parser)
 	}
+	return &WrapperJob{
+		JobParams:  jobParams,
+		JobHandler: realJob,
+		Parser:     pageParser,
+	}, nil
 }
 
-func (job *GenericJob) Load(context.Context) (bool, error) {
-	if !job.enableLoad || !job.enabled {
-		return false, nil
+func (job *WrapperJob) Launch(ctx context.Context, site *model.Site) {
+	newCtx := context.WithValue(ctx, common.ParserCtx, job.Parser)
+	newCtx = context.WithValue(newCtx, common.SiteCtx, site)
+
+	errChan := ctx.Value(common.ErrChan).(chan ExecutionResult)
+
+	if err := job.JobHandler.Validate(newCtx); err != nil {
+		errChan <- ExecutionResult{JobName: job.JobParams.Name, Err: err}
 	}
-	return true, nil
-}
-
-func (job *GenericJob) Analyse() {
-
-}
-
-func (job *GenericJob) Launch(ctx context.Context) error {
-	redisClient := client.GetRedisClient()
-	source, err := stream.NewRedisStreamSource(ctx, redisClient,
-		common.HomeUrlStream, common.HomeUrlStreamConsumer)
-	if err != nil {
-		return err
-	}
-
-	if len(job.JobParams.Url) == 0 {
-		return errors.New("url is required for paring site's home page")
-	}
-	parser := GetParser(job.JobParams.Parser)
-	if parser == nil {
-		return errors.New("invalid parser for paring site's home page")
-	}
-
-	converter := func(homeUrl string) *config.JobParams {
-		return nil
-	}
-
-	flow.NewMap(converter, 1)
-	parseFlow := flow.NewFlatMap(parser.Parse, 1)
-
-	sink := stream.NewRedisStreamSink(ctx, redisClient, common.SiteCatalogUrlStream)
-
-	source.
-		Via(parseFlow).
-		To(sink)
+	go job.JobHandler.Run(newCtx)
 }
