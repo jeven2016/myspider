@@ -24,12 +24,13 @@ const (
 	HomeParser        = "HomeParser"
 	CatalogHomeParser = "CatalogHomeParser"
 	CatalogPageParser = "CatalogPageParser"
-	BookParser        = "BookParser"
+	NovelParser       = "NovelParser"
 	ChapterParser     = "ChapterParser"
 
 	HomeJob        = "HomeJob"
 	CatalogHomeJob = "CatalogHomeJob"
 	CatalogPageJob = "CatalogPageJob"
+	NovelJob       = "NovelJob"
 )
 
 const (

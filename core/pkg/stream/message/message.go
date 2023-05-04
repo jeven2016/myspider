@@ -19,7 +19,15 @@ type SiteCatalogPageMessage struct {
 	CatalogPageLink string `json:"catalogPageLink"`
 }
 
-type BookMessage struct {
+type NovelMessage struct {
+	SiteKey     string `json:"siteKey"`
+	CatalogId   string `json:"catalogId"`
+	CatalogName string `json:"catalogName"`
+	Name        string `json:"name"`
+	NovelLink   string `json:"bookLink"`
+}
+
+type ChapterMessage struct {
 	SiteKey   string `json:"siteKey"`
 	CatalogId string `json:"catalogId"`
 	Name      string `json:"name"`

@@ -28,8 +28,10 @@ func init() {
 	RegisterParser(common.HomeParser, &parser.HomeParser{})
 	RegisterParser(common.CatalogHomeParser, &parser.CatalogHomeParser{})
 	RegisterParser(common.CatalogPageParser, &parser.CatalogPageParser{})
+	RegisterParser(common.NovelParser, &parser.NovelParser{})
 
 	RegisterJob(common.HomeJob, &HomeJob{})
 	RegisterJob(common.CatalogHomeJob, &CatalogHomeJob{})
 	RegisterJob(common.CatalogPageJob, &CatalogPageJob{})
+	RegisterJob(common.NovelJob, &NovelJob{})
 }

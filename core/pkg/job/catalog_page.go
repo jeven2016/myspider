@@ -38,7 +38,7 @@ func (hj *CatalogPageJob) Run(ctx context.Context) {
 	sink := stream.NewRedisStreamSink(ctx, redisClient, message.BookUrlStream)
 
 	source.Via(paramsConvertFlow).
-		Via(FlatMany[*message.BookMessage](catlogPageParser)).
+		Via(FlatMany[*message.NovelMessage](catlogPageParser)).
 		To(sink)
 
 }

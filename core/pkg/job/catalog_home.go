@@ -36,7 +36,7 @@ func (ch *CatalogHomeJob) Run(ctx context.Context) {
 	}
 
 	// fetch url from stream
-	paramsConvertFlow := flow.NewMap(ch.ConvertParams, 1)
+	paramsConvertFlow := flow.NewMap(ch.ConvertParams, common.JobParallelism)
 
 	sink := stream.NewRedisStreamSink(ctx, redisClient, message.CatalogPageUrlStream)
 

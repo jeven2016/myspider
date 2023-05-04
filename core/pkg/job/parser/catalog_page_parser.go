@@ -23,7 +23,7 @@ func (cp *CatalogPageParser) Parse(params *ParseParams) *ParseResult {
 
 	//parse the books listed on current page
 	siteRule := service.GetSiteRule(params.SiteKey)
-	if siteRule == nil || siteRule.Rule == nil || siteRule.Rule.Book == nil {
+	if siteRule == nil || siteRule.Rule == nil || siteRule.Rule.Novel == nil {
 		log.SugaredLogger().Error("no rule found for parsing book: site %v", params.SiteKey)
 		return &ParseResult{Payload: nil}
 	}
@@ -35,9 +35,9 @@ func (cp *CatalogPageParser) Parse(params *ParseParams) *ParseResult {
 		return &ParseResult{Payload: nil}
 	}
 
-	var bookMessages []*message.BookMessage
-	collector.OnHTML(siteRule.Rule.Book.BookUrlSelector, func(element *colly.HTMLElement) {
-		bookMessages = cp.analyse(element, baseUrl, bookMessages, params, siteRule.Rule.Book)
+	var bookMessages []*message.NovelMessage
+	collector.OnHTML(siteRule.Rule.Novel.BookUrlSelector, func(element *colly.HTMLElement) {
+		bookMessages = cp.analyse(element, baseUrl, bookMessages, params, siteRule.Rule.Novel)
 	})
 
 	err = collector.Visit(params.Url)
@@ -49,7 +49,7 @@ func (cp *CatalogPageParser) Parse(params *ParseParams) *ParseResult {
 	return &ParseResult{Payload: bookMessages}
 }
 
-func (cp *CatalogPageParser) analyse(element *colly.HTMLElement, baseUrl string, messages []*message.BookMessage, params *ParseParams, bookRule *model.BookRule) []*message.BookMessage {
+func (cp *CatalogPageParser) analyse(element *colly.HTMLElement, baseUrl string, messages []*message.NovelMessage, params *ParseParams, bookRule *model.NovelRule) []*message.NovelMessage {
 	name := element.DOM.Text()
 
 	link, exists := element.DOM.Attr(bookRule.BookUrlAttr)
@@ -63,11 +63,11 @@ func (cp *CatalogPageParser) analyse(element *colly.HTMLElement, baseUrl string,
 		link = baseUrl + "/" + strings.TrimLeft(link, "/")
 	}
 
-	messages = append(messages, &message.BookMessage{
+	messages = append(messages, &message.NovelMessage{
 		SiteKey:   params.SiteKey,
 		CatalogId: "TODO",
 		Name:      name,
-		BookLink:  link,
+		NovelLink: link,
 	})
 
 	return messages

@@ -11,5 +11,7 @@ type ParseResult struct {
 }
 
 type Parser interface {
+	//TODO
+	//Validate(params *ParseParams) // url could be blank
 	Parse(params *ParseParams) *ParseResult
 }

@@ -14,4 +14,7 @@ const (
 
 	BookUrlStream         = "BookUrlStream"
 	BookUrlStreamConsumer = "BookUrlStreamConsumer"
+
+	ChapterUrlStream         = "ChapterUrlStream"
+	ChapterUrlStreamConsumer = "ChapterUrlStreamConsumer"
 )

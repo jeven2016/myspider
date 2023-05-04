@@ -12,7 +12,7 @@ type CatalogRule struct {
 
 type Rule struct {
 	Home    *HomeRule    `mapstructure:"home"`
-	Book    *BookRule    `mapstructure:"book"`
+	Novel   *NovelRule   `mapstructure:"novel"`
 	Chapter *ChapterRule `mapstructure:"chapter"`
 }
 
@@ -23,17 +23,17 @@ type HomeRule struct {
 	CatalogPageSelector  string `mapstructure:"catalog_page_selector"`
 }
 
-type BookRule struct {
-	BookUrlSelector              string `mapstructure:"book_url_selector"`
-	BookUrlAttr                  string `mapstructure:"book_url_attr"`
-	BookTitleSelector            string `mapstructure:"book_title_selector"`
-	BookAuthorSelector           string `mapstructure:"book_author_selector"`
-	BookCateSelector             string `mapstructure:"book_cate_selector"`
-	BookDescSelector             string `mapstructure:"book_desc_selector"`
-	BookCoverSelector            string `mapstructure:"book_cover_selector"`
-	BookNoCover                  string `mapstructure:"book_no_cover"`
-	BookChapterURLSelector       string `mapstructure:"book_chapter_url_selector"`
-	BookLastChapterTitleSelector string `mapstructure:"book_last_chapter_title_selector"`
+type NovelRule struct {
+	NovelUrlSelector              string `mapstructure:"novel_url_selector"`
+	NovelUrlAttr                  string `mapstructure:"novel_url_attr"`
+	NovelTitleSelector            string `mapstructure:"novel_title_selector"`
+	NovelAuthorSelector           string `mapstructure:"novel_author_selector"`
+	NovelCateSelector             string `mapstructure:"novel_cate_selector"`
+	NovelDescSelector             string `mapstructure:"novel_desc_selector"`
+	NovelCoverSelector            string `mapstructure:"novel_cover_selector"`
+	NovelNoCover                  string `mapstructure:"novel_no_cover"`
+	NovelChapterURLSelector       string `mapstructure:"novel_chapter_url_selector"`
+	NovelLastChapterTitleSelector string `mapstructure:"novel_last_chapter_title_selector"`
 }
 
 type ChapterRule struct {
